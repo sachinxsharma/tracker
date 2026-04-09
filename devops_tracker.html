@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>90-Day DevOps Bootcamp Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1F4E78 0%, #2d5a99 100%);
+            color: white;
+            padding: 30px 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1F4E78;
+        }
+
+        .section {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .section h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #1F4E78;
+            font-weight: 600;
+        }
+
+        .today-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .today-date {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .routine-container {
+            display: grid;
+            gap: 12px;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px;
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .task-item:hover {
+            background: #f0f5ff;
+            border-color: #1F4E78;
+        }
+
+        .task-item.completed {
+            background: #e8f5e9;
+            border-color: #4caf50;
+        }
+
+        .task-info {
+            flex: 1;
+        }
+
+        .task-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+
+        .task-time {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .task-checkbox {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            accent-color: #1F4E78;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 280px;
+            margin-bottom: 20px;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .history-table thead {
+            background: #f9f9f9;
+            position: sticky;
+            top: 0;
+        }
+
+        .history-table th {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .history-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .history-table tbody tr:hover {
+            background: #f9f9f9;
+        }
+
+        .completion-cell {
+            text-align: center;
+            font-weight: 600;
+            color: #1F4E78;
+        }
+
+        .status-cell {
+            text-align: center;
+        }
+
+        .status-perfect {
+            color: #4caf50;
+            font-weight: 600;
+        }
+
+        .status-good {
+            color: #ff9800;
+            font-weight: 600;
+        }
+
+        .status-needs {
+            color: #f44336;
+            font-weight: 600;
+        }
+
+        .history-scroll {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1F4E78, #2d5a99);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .daily-completion {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: #f0f5ff;
+            border-radius: 6px;
+            margin-top: 16px;
+            border-left: 4px solid #1F4E78;
+        }
+
+        .daily-completion-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1F4E78;
+        }
+
+        .daily-completion-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1F4E78;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: 1px solid #1F4E78;
+            background: white;
+            color: #1F4E78;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background: #1F4E78;
+            color: white;
+        }
+
+        button.primary {
+            background: #1F4E78;
+            color: white;
+        }
+
+        button.primary:hover {
+            background: #154a6f;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #1F4E78;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #1565c0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 12px;
+            }
+
+            .header {
+                padding: 20px 16px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .section {
+                padding: 16px;
+            }
+
+            .task-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .task-checkbox {
+                align-self: flex-end;
+                margin-top: 10px;
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #1a1a1a;
+                color: #e0e0e0;
+            }
+
+            .stat-card,
+            .section {
+                background: #2a2a2a;
+                border-color: #444;
+            }
+
+            .stat-value {
+                color: #64b5f6;
+            }
+
+            .section h2 {
+                color: #64b5f6;
+            }
+
+            .task-item {
+                background: #333;
+                border-color: #444;
+                color: #e0e0e0;
+            }
+
+            .task-item:hover {
+                background: #3a4a5f;
+            }
+
+            .task-label {
+                color: #e0e0e0;
+            }
+
+            .today-date,
+            .task-time,
+            .stat-label {
+                color: #999;
+            }
+
+            .history-table thead {
+                background: #333;
+            }
+
+            .history-table th,
+            .history-table td {
+                border-color: #444;
+            }
+
+            .history-table tbody tr:hover {
+                background: #333;
+            }
+
+            .progress-bar {
+                background: #444;
+            }
+
+            .daily-completion {
+                background: #2a3a4a;
+            }
+
+            .info-box {
+                background: #1a3a5a;
+                border-color: #64b5f6;
+                color: #b3e5fc;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>90-Day Azure + Kubernetes DevOps Bootcamp</h1>
+            <p>April 10 - July 9, 2026 • Build 3 Real Projects • Land a Job</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Days Started</div>
+                <div class="stat-value" id="daysCompleted">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Current Streak</div>
+                <div class="stat-value" id="streak">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Completion</div>
+                <div class="stat-value" id="avgCompletion">0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Perfect Days</div>
+                <div class="stat-value" id="perfectDays">0</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="today-info">
+                <h2>Today's Routine</h2>
+                <span class="today-date" id="todayDate"></span>
+            </div>
+            <div class="info-box">
+                ✓ Focus: Azure DevOps + Kubernetes + CI/CD. Check off each task as you complete it. Daily % updates in real-time.
+            </div>
+            <div class="routine-container" id="routineContainer"></div>
+            <div class="daily-completion">
+                <span class="daily-completion-label">Today's Completion:</span>
+                <span class="daily-completion-value" id="todayPercent">0%</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Weekly Progress</h2>
+            <div class="chart-container">
+                <canvas id="weeklyChart" role="img" aria-label="Weekly completion percentage chart"></canvas>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Last 14 Days</h2>
+            <div class="history-scroll">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th class="completion-cell">Completion %</th>
+                            <th class="status-cell">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Data Management</h2>
+            <div class="action-buttons">
+                <button class="primary" onclick="exportData()">📥 Export Data</button>
+                <button onclick="resetData()">🔄 Reset All Data</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tasks = [
+            { id: 'wake', time: '6:30 AM', label: 'Wake/Cold Shower', category: 'morning' },
+            { id: 'gym', time: '7:00 AM', label: 'Gym (2hrs)', category: 'morning' },
+            { id: 'breakfast', time: '9:00 AM', label: 'Breakfast', category: 'fuel' },
+            { id: 'deepwork', time: '9:30-1:30 PM', label: 'Deep Work (Azure + K8s)', category: 'work' },
+            { id: 'lunch', time: '1:30 PM', label: 'Lunch', category: 'fuel' },
+            { id: 'project', time: '2:30-6:00 PM', label: 'Project Building', category: 'work' },
+            { id: 'exercise', time: '6:00 PM', label: 'Evening Exercise', category: 'fitness' },
+            { id: 'review', time: '7:00 PM', label: 'Dinner & Review', category: 'wind' },
+            { id: 'personal', time: '8:00 PM', label: 'Personal Time', category: 'wind' },
+            { id: 'sleep', time: '11:00 PM', label: 'Sleep', category: 'sleep' }
+        ];
+
+        const startDate = new Date(2026, 3, 10);
+        const today = new Date();
+        let data = JSON.parse(localStorage.getItem('devopsData')) || { days: {} };
+
+        function initializeDays() {
+            for (let i = 0; i < 90; i++) {
+                const date = new Date(startDate);
+                date.setDate(date.getDate() + i);
+                const dateKey = date.toISOString().split('T')[0];
+                if (!data.days[dateKey]) {
+                    data.days[dateKey] = tasks.reduce((acc, t) => ({ ...acc, [t.id]: false }), {});
+                }
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('devopsData', JSON.stringify(data));
+            updateUI();
+        }
+
+        function updateUI() {
+            updateTodayRoutine();
+            updateStats();
+            updateChart();
+            updateHistory();
+        }
+
+        function getTodayKey() {
+            return today.toISOString().split('T')[0];
+        }
+
+        function updateTodayRoutine() {
+            const todayKey = getTodayKey();
+            const todayData = data.days[todayKey] || {};
+            const container = document.getElementById('routineContainer');
+            
+            container.innerHTML = tasks.map(task => `
+                <div class="task-item ${todayData[task.id] ? 'completed' : ''}">
+                    <div class="task-info">
+                        <div class="task-label">${task.label}</div>
+                        <div class="task-time">${task.time}</div>
+                    </div>
+                    <input type="checkbox" class="task-checkbox" ${todayData[task.id] ? 'checked' : ''} onchange="toggleTask('${task.id}', this.checked)">
+                </div>
+            `).join('');
+
+            const dateObj = new Date(todayKey);
+            document.getElementById('todayDate').textContent = dateObj.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+
+            updateTodayPercent();
+        }
+
+        function updateTodayPercent() {
+            const todayKey = getTodayKey();
+            const todayData = data.days[todayKey] || {};
+            const completed = Object.values(todayData).filter(v => v).length;
+            const percent = Math.round((completed / tasks.length) * 100);
+            document.getElementById('todayPercent').textContent = percent + '%';
+        }
+
+        function toggleTask(taskId, checked) {
+            const todayKey = getTodayKey();
+            data.days[todayKey][taskId] = checked;
+            saveData();
+        }
+
+        function getCompletion(dateKey) {
+            const dayData = data.days[dateKey];
+            if (!dayData) return 0;
+            const completed = Object.values(dayData).filter(v => v).length;
+            return Math.round((completed / tasks.length) * 100);
+        }
+
+        function updateStats() {
+            const allDates = Object.keys(data.days).sort();
+            const completedDates = allDates.filter(date => new Date(date) <= today && getCompletion(date) > 0);
+            const perfectDays = allDates.filter(date => new Date(date) <= today && getCompletion(date) === 100);
+            
+            let streak = 0;
+            for (let i = completedDates.length - 1; i >= 0; i--) {
+                const date = new Date(completedDates[i]);
+                const expectedDate = new Date(today);
+                expectedDate.setDate(expectedDate.getDate() - (completedDates.length - 1 - i));
+                if (Math.abs(date - expectedDate) < 86400000) streak++;
+                else break;
+            }
+
+            const avgCompletion = completedDates.length > 0 
+                ? Math.round(completedDates.reduce((sum, date) => sum + getCompletion(date), 0) / completedDates.length) 
+                : 0;
+
+            document.getElementById('daysCompleted').textContent = completedDates.length;
+            document.getElementById('streak').textContent = streak;
+            document.getElementById('avgCompletion').textContent = avgCompletion + '%';
+            document.getElementById('perfectDays').textContent = perfectDays.length;
+        }
+
+        function updateChart() {
+            const weeks = [];
+            for (let week = 0; week < 13; week++) {
+                const weekDates = [];
+                for (let day = 0; day < 7; day++) {
+                    const date = new Date(startDate);
+                    date.setDate(date.getDate() + week * 7 + day);
+                    if (date <= today) weekDates.push(date.toISOString().split('T')[0]);
+                }
+                const avgCompletion = weekDates.length > 0 
+                    ? Math.round(weekDates.reduce((sum, date) => sum + getCompletion(date), 0) / weekDates.length) 
+                    : 0;
+                weeks.push(avgCompletion);
+            }
+
+            const ctx = document.getElementById('weeklyChart');
+            if (window.weeklyChartInstance) window.weeklyChartInstance.destroy();
+            
+            window.weeklyChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: weeks.map((_, i) => `W${i + 1}`),
+                    datasets: [{
+                        label: 'Completion %',
+                        data: weeks,
+                        borderColor: '#1F4E78',
+                        backgroundColor: 'rgba(31, 78, 120, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#1F4E78',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { 
+                                callback: v => v + '%',
+                                font: { size: 12 }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: { size: 12 }
+                            }
+                        }
+                    },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => ctx.parsed.y + '%'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateHistory() {
+            const allDates = Object.keys(data.days).sort().reverse().slice(0, 14);
+            const tbody = document.getElementById('historyBody');
+            tbody.innerHTML = allDates.map(dateKey => {
+                const date = new Date(dateKey);
+                const completion = getCompletion(dateKey);
+                let status, statusClass;
+                
+                if (completion === 100) {
+                    status = '✓ Perfect';
+                    statusClass = 'status-perfect';
+                } else if (completion >= 70) {
+                    status = '→ Good';
+                    statusClass = 'status-good';
+                } else if (completion > 0) {
+                    status = '✗ Needs work';
+                    statusClass = 'status-needs';
+                } else {
+                    status = '— No data';
+                    statusClass = 'status-needs';
+                }
+                
+                return `
+                    <tr>
+                        <td>${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' })}</td>
+                        <td class="completion-cell">${completion}%</td>
+                        <td class="status-cell"><span class="${statusClass}">${status}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `devops-tracker-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function resetData() {
+            if (confirm('⚠️ This will delete ALL your progress data. Are you sure? This cannot be undone.')) {
+                if (confirm('Really? This will reset everything.')) {
+                    data = { days: {} };
+                    saveData();
+                    alert('✓ All data has been reset.');
+                }
+            }
+        }
+
+        // Initialize
+        initializeDays();
+        updateUI();
+
+        // Auto-update every minute
+        setInterval(updateUI, 60000);
+    </script>
+</body>
+</html>
